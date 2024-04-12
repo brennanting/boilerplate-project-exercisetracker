@@ -30,11 +30,15 @@ const userSchema = new Schema({
 let User = mongoose.model("User", userSchema);
 
 app.post("/api/users", function(req, res){
-  let newUser = new User({ username: req.body.username })
-  newUser.save((err, createdUser) => {
-    if (err) return console.log(err);
-    res.json({ username: createdUser.username, _id: createdUser._id })
-  })
+  if (!req.body.username) {
+    res.json({error: "missing username"})
+  } else {
+    let newUser = new User({ username: req.body.username })
+    newUser.save((err, createdUser) => {
+      if (err) return console.log(err);
+      res.json({ username: createdUser.username, _id: createdUser._id })
+    })
+  }
 })
 
 app.get("/api/users", function(req, res){
@@ -45,3 +49,50 @@ app.get("/api/users", function(req, res){
         res.json(users);
       })
 })
+
+const exerciseSchema = new Schema({
+  _userid: { type: String, required: true },
+  description: { type: String, required: true },
+  duration: { type: Number, required: true },
+  date: { type: String, required: true, default: new Date().toDateString() }
+})
+
+let Exercise = mongoose.model("Exercise", exerciseSchema);
+
+app.post("/api/users/:_id/exercises", function(req, res) {
+  if (!req.params._id || !req.body.description || !req.body.duration) {
+    res.json({error: "Missing fields"})
+  } else {
+    User.findById(req.params._id, (err, UserFound) => {
+      if (err) return console.log(err);
+      if (!UserFound) {
+        res.json({error: "Invalid User"})
+      } else {
+        var datetoset = "new Date";
+        if (!req.body.date) {
+          datetoset = new Date().toDateString();
+        } else{
+          datetoset = new Date(req.body.date).toDateString();
+        }
+        console.log(datetoset);
+        let newExercise = new Exercise({
+          _userid: req.params._id,
+          description: req.body.description,
+          duration: req.body.duration,
+          date: datetoset
+        });
+        newExercise.save((err, createdExercise) => {
+          if (err) return console.log(err);
+          res.json({
+            username: UserFound.username,
+            description: createdExercise.description,
+            duration: createdExercise.duration,
+            date: createdExercise.date,
+            _id: createdExercise._userid
+          })
+        })
+      }
+    });
+  }
+})
+
