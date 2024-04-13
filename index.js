@@ -74,7 +74,6 @@ app.post("/api/users/:_id/exercises", function(req, res) {
         } else{
           datetoset = new Date(req.body.date).toDateString();
         }
-        console.log(datetoset);
         let newExercise = new Exercise({
           _userid: req.params._id,
           description: req.body.description,
