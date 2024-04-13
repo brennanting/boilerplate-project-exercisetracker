@@ -96,3 +96,46 @@ app.post("/api/users/:_id/exercises", function(req, res) {
   }
 })
 
+app.get("/api/users/:id/logs/", (req, res) => {
+  if (new Date(req.query.from) > new Date(req.query.to)) {
+    res.json({error: "Invalid parameters"})
+    } else {
+    User.findById(req.params.id, (err, UserFound) => {
+      if (err) return console.log(err)
+      if (!UserFound) {
+        res.json({error: "Invalid user"})
+      } else {
+        Exercise.find({_userid: req.params.id})
+                .select({description: 1, duration: 1, date: 1})
+                .exec((err, exercisesFound) => {
+                  if (err) return console.log(err);
+                  if (req.query.from) {
+                    var inputfrom = new Date(req.query.from);
+                    exercisesFound = exercisesFound.filter((exercise) => {
+                      return new Date(exercise.date) >= inputfrom;
+                    })
+                  }
+                  if (req.query.to) {
+                    var inputto = new Date(req.query.to);
+                    exercisesFound = exercisesFound.filter((exercise) => {
+                      return new Date(exercise.date) <= inputto;
+                    })
+                  }
+                  if (req.query.limit) {
+                    var inputlimit = Number(req.query.limit)
+                    if (exercisesFound.length > inputlimit) {
+                      exercisesFound.length = inputlimit;
+                    }
+                  }
+                  var totalcount = exercisesFound.length;
+                  res.json({
+                    username: UserFound.username,
+                    count: totalcount,
+                    _id: UserFound._id,
+                    log: exercisesFound
+                  })
+                })
+      }
+    })
+  }
+})
